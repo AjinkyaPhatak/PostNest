@@ -1,63 +1,71 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from "react";
+import Navbar from "../components/navbar";
 
-export default function Home() {
-  const [posts, setPosts] = useState<any[]>([])
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
+
+export default function HomePage() {
+  const [posts, setPosts] = useState<{ user: string; content: string }[]>([]);
+  const [user, setUser] = useState("");
+  const [content, setContent] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!user || !content) return;
+
+  const email = `${user.toLowerCase().replace(/\s/g, "")}@postnest.com`;
+
+  const res = await fetch("/api/posts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: user, email, content }),
+  });
+
+  const newPost = await res.json();
+  setPosts([newPost, ...posts]);
+  setContent("");
 
   useEffect(() => {
-    fetch('/api/posts')
-      .then(res => res.json())
-      .then(data => setPosts(data))
-  }, [])
+  fetch("/api/posts")
+    .then((res) => res.json())
+    .then(setPosts);
+}, []);
+};
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    await fetch('/api/posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content }),
-    })
-    setTitle('')
-    setContent('')
-    alert('Post submitted for approval!')
-  }
 
   return (
-    <main style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>🪶 PostNest</h1>
-      <form onSubmit={handleSubmit} style={{ marginBottom: '2rem' }}>
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          required
-          style={{ display: 'block', marginBottom: '1rem', width: '300px' }}
-        />
-        <textarea
-          placeholder="Write something..."
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          required
-          style={{ display: 'block', marginBottom: '1rem', width: '300px', height: '100px' }}
-        />
-        <button type="submit">Submit Post</button>
-      </form>
+    <div>
+      <Navbar />
+      <main className="container space-y-8 mt-6">
+        <h1 className="text-3xl font-bold">Welcome to PostNest 🪶</h1>
 
-      <h2>Approved Posts</h2>
-      <div>
-        {posts.length === 0 && <p>No posts yet.</p>}
-        {posts.map(post => (
-          <div key={post.id} style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
-            <h3>{post.title}</h3>
-            <p>{post.content}</p>
-            <small>{new Date(post.createdAt).toLocaleString()}</small>
-          </div>
-        ))}
-      </div>
-    </main>
-  )
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            placeholder="Your name"
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
+            className="input"
+          />
+          <textarea
+            placeholder="What's on your mind?"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="input min-h-[100px]"
+          />
+          <button type="submit" className="btn btn-primary w-full">
+            Post
+          </button>
+        </form>
+
+        <div className="space-y-4">
+          {posts.map((post, idx) => (
+            <div key={idx} className="card">
+              <h2 className="font-semibold text-blue-400">@{post.user}</h2>
+              <p className="mt-2 text-gray-300">{post.content}</p>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
 }

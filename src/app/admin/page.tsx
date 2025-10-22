@@ -1,87 +1,74 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from "react";
+import Navbar from "@/components/navbar";
 
-export default function AdminPage() {
-  const [posts, setPosts] = useState<any[]>([])
-  const [secret, setSecret] = useState('')
-  const [loading, setLoading] = useState(false)
+export default function AdminDashboard() {
+  const [pendingPosts, setPendingPosts] = useState<any[]>([]);
+  const [secret, setSecret] = useState("");
+  const [isAuthed, setIsAuthed] = useState(false);
 
-  // Fetch all posts (approved or not)
-  async function fetchPosts() {
-    const res = await fetch('/api/posts?all=true')
-    const data = await res.json()
-    setPosts(data)
-  }
-
-  useEffect(() => {
-    fetchPosts()
-  }, [])
-
-  async function approvePost(id: number) {
-    if (!secret) {
-      alert('Please enter your admin secret first.')
-      return
-    }
-    setLoading(true)
-    const res = await fetch('/api/admin/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, secret }),
-    })
-    setLoading(false)
-
+  const fetchPosts = async () => {
+    const res = await fetch(`/api/admin/posts?secret=${secret}`);
     if (res.ok) {
-      alert('Post approved!')
-      fetchPosts()
-    } else {
-      alert('Invalid secret or error approving post.')
+      const data = await res.json();
+      setPendingPosts(data);
     }
-  }
+  };
+
+  const handleApprove = async (id: number) => {
+    await fetch(`/api/admin/posts/${id}/approve`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret }),
+    });
+    setPendingPosts(pendingPosts.filter((p) => p.id !== id));
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await fetchPosts();
+    setIsAuthed(true);
+  };
 
   return (
-    <main style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>🛠 Admin Dashboard</h1>
-
-      <div style={{ marginBottom: '1rem' }}>
-        <input
-          type="password"
-          placeholder="Enter admin secret"
-          value={secret}
-          onChange={(e) => setSecret(e.target.value)}
-          style={{ padding: '0.5rem', width: '300px' }}
-        />
-      </div>
-
-      <button onClick={fetchPosts} disabled={loading}>
-        Refresh Posts
-      </button>
-
-      <h2 style={{ marginTop: '2rem' }}>All Posts</h2>
-      {posts.length === 0 && <p>No posts yet.</p>}
-
-      {posts.map((post) => (
-        <div
-          key={post.id}
-          style={{
-            border: '1px solid #ccc',
-            padding: '1rem',
-            marginBottom: '1rem',
-            backgroundColor: post.approved ? '#e8ffe8' : '#ffe8e8',
-          }}
-        >
-          <h3>{post.title}</h3>
-          <p>{post.content}</p>
-          <p>
-            <b>Status:</b> {post.approved ? '✅ Approved' : '⏳ Pending'}
-          </p>
-          {!post.approved && (
-            <button onClick={() => approvePost(post.id)} disabled={loading}>
-              Approve
+    <div>
+      <Navbar />
+      <main className="container mt-8">
+        {!isAuthed ? (
+          <form onSubmit={handleLogin} className="space-y-4 max-w-md mx-auto text-center">
+            <h1 className="text-2xl font-bold text-blue-400">Admin Login</h1>
+            <input
+              type="password"
+              value={secret}
+              onChange={(e) => setSecret(e.target.value)}
+              placeholder="Enter admin secret"
+              className="input"
+            />
+            <button type="submit" className="btn btn-primary w-full">
+              Enter Dashboard
             </button>
-          )}
-        </div>
-      ))}
-    </main>
-  )
+          </form>
+        ) : (
+          <div className="space-y-8">
+            <h1 className="text-3xl font-bold text-blue-400">Pending Posts ⚙️</h1>
+            <div className="space-y-4">
+              {pendingPosts.length === 0 && <p className="text-gray-500">No posts pending approval</p>}
+              {pendingPosts.map((post) => (
+                <div key={post.id} className="card">
+                  <h2 className="font-semibold text-blue-400">@{post.author?.name}</h2>
+                  <p className="mt-2 text-gray-300">{post.content}</p>
+                  <div className="mt-4 flex gap-2">
+                    <button onClick={() => handleApprove(post.id)} className="btn btn-primary">
+                      Approve
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }

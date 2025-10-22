@@ -1,18 +1,17 @@
-// src/app/api/admin/posts/route.ts
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-
-function checkAdmin(req: Request) {
-  const secret = req.headers.get("x-admin-secret") || process.env.ADMIN_SECRET;
-  return secret === process.env.ADMIN_SECRET;
-}
+import { prisma } from "@/lib/prisma";
+console.log(prisma ? "✅ Prisma imported fine" : "❌ Error");
 
 export async function GET(req: Request) {
-  if (!checkAdmin(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { searchParams } = new URL(req.url);
+  const secret = searchParams.get("secret");
+
+  if (secret !== process.env.ADMIN_SECRET) {
+    return new NextResponse("Unauthorized", { status: 401 });
   }
 
   const posts = await prisma.post.findMany({
+    where: { approved: false },
     include: { author: true },
     orderBy: { createdAt: "desc" },
   });
