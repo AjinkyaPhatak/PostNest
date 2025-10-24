@@ -8,15 +8,17 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  role      Role     @default(USER)
+  id        Int       @id @default(autoincrement())
+  name      String?
+  email     String    @unique
+  image     String?   // ✅ Add this if not present
+  role      Role      @default(USER)
   posts     Post[]
-  createdAt DateTime @default(now())
-  accounts Account[]
-  sessions Session[]
+  createdAt DateTime  @default(now())
+  accounts  Account[]
+  sessions  Session[]
 }
+
 
 model Post {
   id          Int      @id @default(autoincrement())
