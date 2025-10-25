@@ -1,9 +1,9 @@
 "use client";
-
+import "./globals.css";
 import { useEffect, useState } from "react";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { auth, provider } from "@/lib/firebase";
-import Navbar from "../components/navbar";
+import Navbar from "@/components/navbar";
 import { User, LogOut, Send, Loader2, MessageSquare } from "lucide-react";
 
 type Post = {
@@ -13,6 +13,7 @@ type Post = {
 };
 
 export default function HomePage() {
+  console.log("🔥 HomePage is rendering!");
   const [posts, setPosts] = useState<Post[]>([]);
   const [user, setUser] = useState<any>(null);
   const [content, setContent] = useState("");
