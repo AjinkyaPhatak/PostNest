@@ -20,26 +20,35 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
 
-  // Watch for auth state changes
+  // Listen for Firebase auth state changes so the UI updates immediately after sign in/out
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setIsLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
     });
     return () => unsubscribe();
   }, []);
 
+  // Watch for auth state changes
   // Fetch all posts
   useEffect(() => {
-    setIsLoading(true);
-    fetch("/api/posts")
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      try {
+        const emailQuery = user
+          ? `?email=${encodeURIComponent(user.email)}`
+          : "";
+        const res = await fetch(`/api/posts${emailQuery}`);
+        const data = await res.json();
         setPosts(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
         setIsLoading(false);
-      })
-      .catch(() => setIsLoading(false));
-  }, []);
+      }
+    };
+
+    fetchPosts();
+  }, [user]);
 
   // Handle Google login
   const handleLogin = async () => {
@@ -61,7 +70,7 @@ export default function HomePage() {
     if (!user || !content.trim()) return;
 
     setIsPosting(true);
-    
+
     try {
       const res = await fetch("/api/posts", {
         method: "POST",
@@ -86,14 +95,16 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Navbar />
-      
+
       <main className="max-w-3xl mx-auto px-6 pt-24 pb-12">
         {/* Hero Section */}
         <div className="text-center mb-12 animate-fade-in">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
             Welcome to PostNest
           </h1>
-          <p className="text-gray-400 text-lg">Share your thoughts with the world 🪶</p>
+          <p className="text-gray-400 text-lg">
+            Share your thoughts with the world 🪶
+          </p>
         </div>
 
         {isLoading ? (
@@ -107,8 +118,12 @@ export default function HomePage() {
               <div className="bg-gradient-to-br from-blue-500/20 to-purple-600/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <User className="w-10 h-10 text-blue-400" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-3">Join the Conversation</h2>
-              <p className="text-gray-400 mb-8">Sign in to create posts and connect with others</p>
+              <h2 className="text-2xl font-bold text-white mb-3">
+                Join the Conversation
+              </h2>
+              <p className="text-gray-400 mb-8">
+                Sign in to create posts and connect with others
+              </p>
               <button
                 onClick={handleLogin}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
@@ -132,7 +147,9 @@ export default function HomePage() {
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900"></div>
                   </div>
                   <div>
-                    <p className="font-semibold text-white text-lg">{user.displayName}</p>
+                    <p className="font-semibold text-white text-lg">
+                      {user.displayName}
+                    </p>
                     <p className="text-sm text-gray-400">{user.email}</p>
                   </div>
                 </div>
@@ -156,7 +173,7 @@ export default function HomePage() {
                   className="w-full bg-slate-900/50 text-white placeholder-gray-500 border border-slate-700/50 rounded-xl p-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 resize-none"
                   disabled={isPosting}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                       handleSubmit(e);
                     }
                   }}
@@ -190,7 +207,9 @@ export default function HomePage() {
           {posts.length === 0 && !isLoading ? (
             <div className="text-center py-16">
               <MessageSquare className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">No posts yet. Be the first to share!</p>
+              <p className="text-gray-400 text-lg">
+                No posts yet. Be the first to share!
+              </p>
             </div>
           ) : (
             posts.map((post, idx) => (
@@ -203,7 +222,9 @@ export default function HomePage() {
                     {post.user.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-blue-400">@{post.user}</h3>
+                    <h3 className="font-semibold text-blue-400">
+                      @{post.user}
+                    </h3>
                     {post.timestamp && (
                       <p className="text-xs text-gray-500">{post.timestamp}</p>
                     )}
