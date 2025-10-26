@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { auth, provider } from "@/lib/firebase";
 import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
 
 export default function Navbar() {
   const [user, setUser] = useState<any>(null);
-  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -24,11 +22,6 @@ export default function Navbar() {
     } catch (err) {
       console.error("Login error:", err);
     }
-  };
-
-  const handleCreatePost = () => {
-    // Navigate to the API route as requested. This will show the API response in the browser.
-    router.push("/api/posts");
   };
 
   return (
@@ -57,20 +50,13 @@ export default function Navbar() {
               Admin
             </Link>
 
-            {/* Conditionally show Sign In or Create Post */}
-            {!user ? (
+            {/* Show Sign In button only when not authenticated */}
+            {!user && (
               <button
                 onClick={handleLogin}
                 className="ml-2 bg-white text-black px-4 py-2 rounded-md hover:bg-gray-200 transition"
               >
                 Sign in with Google
-              </button>
-            ) : (
-              <button
-                onClick={handleCreatePost}
-                className="ml-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-md hover:opacity-90 transition"
-              >
-                Create Post
               </button>
             )}
           </div>
