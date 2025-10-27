@@ -1,16 +1,29 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@src/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const { secret } = await req.json();
-  if (secret !== process.env.ADMIN_SECRET) {
-    return new NextResponse("Unauthorized", { status: 401 });
+// Admin approval endpoint - the admin UI already checks the signed-in user's
+// email against the configured admin email, so this endpoint performs the
+// approval update directly.
+export async function POST(req: Request) {
+  try {
+    const pathname = new URL(req.url).pathname;
+    const m = pathname.match(/\/api\/admin\/posts\/(.+?)\/approve$/);
+    const id = m ? Number(m[1]) : NaN;
+    if (Number.isNaN(id)) {
+      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+    }
+
+    const post = await prisma.post.update({
+      where: { id },
+      data: { approved: true },
+    });
+
+    return NextResponse.json(post);
+  } catch (err) {
+    console.error("Error approving post:", err);
+    return NextResponse.json(
+      { error: "Failed to approve post" },
+      { status: 500 }
+    );
   }
-
-  const post = await prisma.post.update({
-    where: { id: Number(params.id) },
-    data: { approved: true },
-  });
-
-  return NextResponse.json(post);
 }

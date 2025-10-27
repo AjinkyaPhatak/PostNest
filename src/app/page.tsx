@@ -1,6 +1,7 @@
 "use client";
 import "./globals.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { auth, provider } from "@/lib/firebase";
 import Navbar from "@/components/navbar";
@@ -28,27 +29,36 @@ export default function HomePage() {
     return () => unsubscribe();
   }, []);
 
-  // Watch for auth state changes
-  // Fetch all posts
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setIsLoading(true);
-      try {
-        const emailQuery = user
-          ? `?email=${encodeURIComponent(user.email)}`
-          : "";
-        const res = await fetch(`/api/posts${emailQuery}`);
-        const data = await res.json();
-        setPosts(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const pathname = usePathname();
 
-    fetchPosts();
-  }, [user]);
+  // Extracted fetch so we can call it on mount, on auth change, and when the pathname changes back to '/'
+  const fetchPosts = useCallback(async (currentUser: any) => {
+    setIsLoading(true);
+    try {
+      const emailQuery = currentUser
+        ? `?email=${encodeURIComponent(currentUser.email)}`
+        : "";
+      const res = await fetch(`/api/posts${emailQuery}`);
+      const data = await res.json();
+      setPosts(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch when auth changes
+  useEffect(() => {
+    fetchPosts(user);
+  }, [user, fetchPosts]);
+
+  // Re-fetch when returning to the home pathname (fixes disappearing posts when navigating back from admin)
+  useEffect(() => {
+    if (pathname === "/") {
+      fetchPosts(user);
+    }
+  }, [pathname, user, fetchPosts]);
 
   // Handle Google login
   const handleLogin = async () => {
