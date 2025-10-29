@@ -103,7 +103,10 @@ export default function AdminDashboard() {
               <h2 className="font-semibold text-blue-400">
                 @{post.author?.name}
               </h2>
-              <p className="mt-2 text-gray-300">{post.content}</p>
+              <p className="mt-2 text-gray-300">
+                <strong className="block text-white">{post.title}</strong>
+                <span className="text-gray-300">{post.body}</span>
+              </p>
               <button
                 onClick={() => handleApprove(post.id)}
                 className="btn btn-primary mt-4"

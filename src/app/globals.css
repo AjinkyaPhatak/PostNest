@@ -3,11 +3,12 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  @apply bg-[#0f1117] text-gray-100 font-sans;
+  /* light page background similar to Reddit */
+  @apply bg-gray-100 text-gray-900 font-sans;
 }
 
 .container {
@@ -19,13 +20,102 @@ body {
 }
 
 .btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white;
+  @apply bg-[#ff4500] hover:bg-[#e04300] text-white;
 }
 
 .input {
-  @apply bg-[#1a1c23] text-gray-100 border border-gray-700 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-blue-600;
+  @apply bg-white text-gray-900 border border-gray-300 rounded-md px-3 py-2 w-full outline-none focus:ring-2 focus:ring-[#ff4500];
 }
 
 .card {
-  @apply bg-[#1a1c23] border border-gray-800 rounded-xl p-4 shadow-md hover:shadow-blue-600/10 transition-shadow;
+  @apply bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow;
+}
+
+/* Reddit-like card and elements */
+.reddit-card {
+  @apply bg-white rounded-md shadow border border-gray-200 overflow-hidden mb-4;
+}
+
+.vote-col {
+  @apply bg-gray-50 flex flex-col items-center justify-center;
+  width: 56px;
+}
+
+.vote-btn {
+  @apply text-gray-400 hover:text-gray-800 cursor-pointer;
+}
+
+.vote-count {
+  @apply text-sm font-semibold;
+}
+
+.community-pill {
+  @apply text-xs bg-gray-200 text-gray-700 rounded px-2 py-0.5 font-semibold;
+}
+
+.post-title {
+  @apply text-gray-900;
+}
+
+.sidebar-card {
+  @apply bg-white border border-gray-200 rounded-md p-4 shadow-sm;
+}
+
+/* Adjust body for reddit-like light theme on content area */
+main {
+  /* keep overall app dark background but content cards are light */
+}
+
+/* Post detail styles to emulate Reddit's layout */
+.post-detail-container {
+  @apply max-w-5xl mx-auto p-6;
+}
+
+.post-detail {
+  @apply bg-white rounded-md border border-gray-200 shadow-sm overflow-hidden flex;
+}
+
+.post-vote {
+  @apply flex flex-col items-center justify-start bg-gray-50 px-3 py-4;
+  width: 72px;
+}
+
+.post-vote button {
+  @apply text-2xl font-bold text-gray-400 hover:text-orange-500 cursor-pointer select-none;
+}
+
+.post-vote .score {
+  @apply my-2 text-center text-sm font-bold text-gray-800;
+}
+
+.post-content {
+  @apply flex-1 p-6;
+}
+
+.post-meta {
+  @apply flex items-center gap-3 text-sm text-gray-500 mb-3;
+}
+
+.post-header {
+  @apply mb-4;
+}
+
+.post-body {
+  @apply text-gray-800 leading-relaxed whitespace-pre-wrap mb-6;
+}
+
+.post-actions {
+  @apply flex items-center gap-4 text-sm text-gray-600 border-t border-gray-100 pt-3;
+}
+
+.author-box {
+  @apply flex items-center gap-3 text-sm text-gray-600;
+}
+
+.author-avatar {
+  @apply w-8 h-8 rounded-full bg-[#ffedd8] flex items-center justify-center text-[#ff4500] font-bold;
+}
+
+.comments-area {
+  @apply mt-6 bg-white border border-gray-200 rounded-md p-4 shadow-sm;
 }

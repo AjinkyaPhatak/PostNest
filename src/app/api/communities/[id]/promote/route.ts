@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyIdToken } from "@/lib/firebaseAdmin";
 
 export async function POST(req: Request, context: any) {
   try {
@@ -9,33 +10,63 @@ export async function POST(req: Request, context: any) {
         ? await params
         : params;
     const id = resolvedParams?.id;
-    const body = await req.json();
-    const { masterEmail, targetEmail } = body;
 
-    if (!masterEmail || !targetEmail) {
+    // Verify caller via Authorization: Bearer <idToken>
+    const authHeader = req.headers.get("authorization") || "";
+    if (!authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
-        { error: "masterEmail and targetEmail required" },
-        { status: 400 }
+        { error: "Missing Authorization header" },
+        { status: 401 }
       );
     }
+    const idToken = authHeader.split(" ")[1];
+    let decoded: any;
+    try {
+      decoded = await verifyIdToken(idToken);
+    } catch (e) {
+      console.error("Failed to verify ID token:", e);
+      return NextResponse.json({ error: "Invalid ID token" }, { status: 401 });
+    }
 
-    const master = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.trim().toLowerCase();
-    if (masterEmail.trim().toLowerCase() !== master) {
+    const callerEmail = (decoded?.email || "").trim().toLowerCase();
+
+    const body = await req.json();
+    const { targetEmail } = body;
+
+    if (!targetEmail) {
       return NextResponse.json(
-        { error: "Only master admin can promote" },
-        { status: 403 }
+        { error: "targetEmail required" },
+        { status: 400 }
       );
     }
 
     const communityId = Number(id);
     const community = await prisma.community.findUnique({
       where: { id: communityId },
+      include: { admin: true },
     });
     if (!community)
       return NextResponse.json(
         { error: "Community not found" },
         { status: 404 }
       );
+
+    const master = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.trim().toLowerCase();
+
+    // Authorized if caller is master OR caller is current community admin
+    const isMaster = callerEmail && master && callerEmail === master;
+    const isCommunityAdmin =
+      callerEmail &&
+      community.admin &&
+      community.admin.email &&
+      callerEmail === community.admin.email.toLowerCase();
+
+    if (!isMaster && !isCommunityAdmin) {
+      return NextResponse.json(
+        { error: "Not authorized to promote" },
+        { status: 403 }
+      );
+    }
 
     // find or create target user
     let user = await prisma.user.findUnique({ where: { email: targetEmail } });

@@ -16,6 +16,7 @@ model User {
   posts       Post[]
   memberships CommunityMembership[]
   adminOf     Community?            @relation("CommunityAdmin")
+  votes       Vote[]
   createdAt   DateTime              @default(now())
   accounts    Account[]
   sessions    Session[]
@@ -23,13 +24,27 @@ model User {
 
 model Post {
   id          Int        @id @default(autoincrement())
-  content     String
+  title       String   @default("")
+  body        String   @default("")
   approved    Boolean    @default(false)
   author      User?      @relation(fields: [authorId], references: [id])
   authorId    Int?
   community   Community? @relation(fields: [communityId], references: [id])
   communityId Int?
+  votes       Vote[]
   createdAt   DateTime   @default(now())
+}
+
+model Vote {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    Int
+  value     Int      // 1 for upvote, -1 for downvote
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
 }
 
 model Community {

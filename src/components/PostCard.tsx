@@ -1,38 +1,83 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import Link from "next/link";
+import { auth } from "@/lib/firebase";
 
 export default function PostCard({ post }: { post: any }) {
+  const [score, setScore] = useState<number>(post.score ?? 0);
+  const [userVote, setUserVote] = useState<number>(post.userVote ?? 0);
+
+  const cast = async (val: number) => {
+    const user = auth.currentUser;
+    if (!user) return alert("Sign in to vote");
+    const token = await user.getIdToken();
+    try {
+      const res = await fetch(`/api/posts/${post.id}/vote`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ value: val }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "vote failed");
+      setScore(data.score ?? score);
+      setUserVote(data.userVote ?? val);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to cast vote");
+    }
+  };
+
   return (
-    <article className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
-      <div className="flex items-start space-x-4">
-        <div className="flex flex-col items-center">
-          <button className="text-gray-400 hover:text-orange-400">▲</button>
-          <span className="text-sm font-bold text-white">0</span>
-          <button className="text-gray-400 hover:text-blue-400">▼</button>
+    <article className="reddit-card">
+      <div className="flex">
+        {/* Vote column */}
+        <div className="vote-col flex flex-col items-center px-3 py-2 text-gray-400">
+          <button
+            onClick={() => cast(userVote === 1 ? 0 : 1)}
+            className={`vote-btn ${userVote === 1 ? "text-orange-500" : ""}`}
+          >
+            ▲
+          </button>
+          <span className="vote-count text-sm font-semibold text-gray-900 bg-white rounded px-2 py-0.5 mt-1">
+            {score}
+          </span>
+          <button
+            onClick={() => cast(userVote === -1 ? 0 : -1)}
+            className={`vote-btn ${userVote === -1 ? "text-blue-500" : ""}`}
+          >
+            ▼
+          </button>
         </div>
 
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <span className="text-xs text-gray-400 mr-2">
-                r/{post.community?.name || "all"}
+        {/* Post body */}
+        <div className="flex-1 p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="community-pill">
+              r/{post.community?.name || "all"}
+            </span>
+            <span className="text-sm text-gray-400">Posted by</span>
+            <span className="text-sm font-semibold">{post.user}</span>
+            {post.timestamp && (
+              <span className="text-xs text-gray-400 ml-2">
+                {post.timestamp}
               </span>
-              <span className="font-semibold text-white">{post.user}</span>
-              {post.timestamp && (
-                <span className="text-xs text-gray-500 ml-2">
-                  {post.timestamp}
-                </span>
-              )}
-            </div>
+            )}
           </div>
 
-          <div className="text-gray-300 leading-relaxed">{post.content}</div>
+          <h3 className="post-title text-lg font-semibold text-gray-900 mb-2">
+            <Link href={`/post/${post.id}`}>{post.title}</Link>
+          </h3>
 
-          <div className="mt-4 flex items-center space-x-4 text-sm text-gray-400">
-            <button>comments</button>
-            <button>share</button>
-            <button>save</button>
+          <div className="flex items-center gap-4 text-sm text-gray-500">
+            <Link href={`/post/${post.id}`} className="hover:text-gray-700">
+              Comments
+            </Link>
+            <button className="hover:text-gray-700">Share</button>
+            <button className="hover:text-gray-700">Save</button>
           </div>
         </div>
       </div>

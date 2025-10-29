@@ -9,14 +9,17 @@ import { User, LogOut, Send, Loader2, MessageSquare } from "lucide-react";
 
 type Post = {
   user: string;
-  content: string;
+  title: string;
+  body?: string;
   timestamp?: string;
+  score?: number;
 };
 
 export default function HomePage() {
   console.log("🔥 HomePage is rendering!");
   const [posts, setPosts] = useState<Post[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
@@ -101,7 +104,7 @@ export default function HomePage() {
   // Handle post submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !content.trim()) return;
+    if (!user || !title.trim()) return;
 
     setIsPosting(true);
 
@@ -112,12 +115,14 @@ export default function HomePage() {
         body: JSON.stringify({
           name: user.displayName,
           email: user.email,
-          content,
+          title,
+          body: content,
         }),
       });
 
       const newPost = await res.json();
       setPosts([newPost, ...posts]);
+      setTitle("");
       setContent("");
     } catch (err) {
       console.error("Post error:", err);
@@ -131,34 +136,34 @@ export default function HomePage() {
       <main>
         {/* Hero Section */}
         <div className="text-center mb-12 animate-fade-in">
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-4 text-gray-900">
             Welcome to PostNest
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-700 text-lg">
             Share your thoughts with the world 🪶
           </p>
         </div>
 
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-gray-600 animate-spin" />
           </div>
         ) : !user ? (
           /* Login Section */
           <div className="flex flex-col items-center space-y-6 py-12">
-            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center max-w-md w-full shadow-2xl">
-              <div className="bg-gradient-to-br from-blue-500/20 to-purple-600/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <User className="w-10 h-10 text-blue-400" />
+            <div className="card text-center max-w-md w-full">
+              <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 bg-[#ffedd8]">
+                <User className="w-10 h-10 text-[#ff4500]" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-3">
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
                 Join the Conversation
               </h2>
-              <p className="text-gray-400 mb-8">
+              <p className="text-gray-600 mb-8">
                 Sign in to create posts and connect with others
               </p>
               <button
                 onClick={handleLogin}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                className="w-full btn-primary py-3 px-6 rounded transition-all duration-200"
               >
                 Sign in with Google
               </button>
@@ -167,27 +172,26 @@ export default function HomePage() {
         ) : (
           <>
             {/* User Profile Card */}
-            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 mb-8 shadow-xl">
+            <div className="card mb-8">
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
                     <img
                       src={user.photoURL || "https://via.placeholder.com/150"}
                       alt="User Avatar"
-                      className="w-14 h-14 rounded-full ring-4 ring-blue-500/30"
+                      className="w-14 h-14 rounded-full"
                     />
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900"></div>
                   </div>
                   <div>
-                    <p className="font-semibold text-white text-lg">
+                    <p className="font-semibold text-gray-900 text-lg">
                       {user.displayName}
                     </p>
-                    <p className="text-sm text-gray-400">{user.email}</p>
+                    <p className="text-sm text-gray-600">{user.email}</p>
                   </div>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-2 bg-slate-700/50 hover:bg-slate-600/50 text-gray-300 hover:text-white px-4 py-2 rounded-lg transition-all duration-200 border border-slate-600/50"
+                  className="flex items-center space-x-2 border border-gray-300 px-4 py-2 rounded bg-white text-gray-700 hover:bg-gray-50"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Logout</span>
@@ -197,12 +201,20 @@ export default function HomePage() {
 
             {/* Create Post Form */}
             <div className="mb-12">
-              <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-xl">
+              <div className="card">
+                <input
+                  placeholder="Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full bg-white text-gray-900 border border-gray-300 rounded p-3 mb-3 focus:outline-none focus:ring-2 focus:ring-[#ff4500]"
+                  disabled={isPosting}
+                />
+
                 <textarea
                   placeholder="What's on your mind?"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  className="w-full bg-slate-900/50 text-white placeholder-gray-500 border border-slate-700/50 rounded-xl p-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 resize-none"
+                  className="w-full bg-white text-gray-900 border border-gray-300 rounded p-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#ff4500] resize-none"
                   disabled={isPosting}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -214,17 +226,17 @@ export default function HomePage() {
                   <button
                     onClick={handleSubmit}
                     disabled={!content.trim() || isPosting}
-                    className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:hover:scale-100 shadow-lg"
+                    className="btn-primary disabled:opacity-60"
                   >
                     {isPosting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Posting...</span>
+                        <span className="ml-2">Posting...</span>
                       </>
                     ) : (
                       <>
                         <Send className="w-4 h-4" />
-                        <span>Post</span>
+                        <span className="ml-2">Post</span>
                       </>
                     )}
                   </button>
@@ -238,8 +250,8 @@ export default function HomePage() {
         <div className="space-y-6">
           {posts.length === 0 && !isLoading ? (
             <div className="text-center py-16">
-              <MessageSquare className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">
+              <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 text-lg">
                 No posts yet. Be the first to share!
               </p>
             </div>

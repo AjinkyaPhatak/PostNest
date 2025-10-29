@@ -116,6 +116,33 @@ export default function CommunityAdminPage({
     fetchData();
   };
 
+  const promoteMember = async (memberEmail: string) => {
+    const token = await getToken();
+    if (!token) return alert("Sign in as admin to promote users");
+
+    try {
+      const res = await fetch(`/api/communities/${id}/promote`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ targetEmail: memberEmail }),
+      });
+      const data = await res.json();
+      if (data?.error) {
+        alert(`Error: ${data.error}`);
+      } else {
+        alert(`Promoted ${memberEmail} to admin`);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to promote member");
+    }
+
+    fetchData();
+  };
+
   if (loading) return <div>Loading admin tools...</div>;
 
   if (!authorized)
@@ -142,7 +169,10 @@ export default function CommunityAdminPage({
           pendingPosts.map((p: any) => (
             <div key={p.id} className="bg-slate-900/50 p-4 rounded-md mb-3">
               <div className="font-semibold text-white">{p.user}</div>
-              <div className="text-gray-300 mt-2">{p.content}</div>
+              <div className="text-gray-300 mt-2">
+                <strong className="block text-white">{p.title}</strong>
+                <span className="text-gray-300">{p.body}</span>
+              </div>
               <div className="mt-3 flex space-x-2">
                 <button
                   onClick={() => approve(p.id)}
@@ -167,29 +197,48 @@ export default function CommunityAdminPage({
         {members.length === 0 ? (
           <div className="text-sm text-gray-400">No members</div>
         ) : (
-          members.map((m: any) => (
-            <div
-              key={m.id}
-              className="flex items-center justify-between bg-slate-900/50 p-3 rounded-md mb-2"
-            >
-              <div>
-                <div className="font-semibold text-white">
-                  {m.user?.name || m.user?.email}
-                </div>
-                <div className="text-sm text-gray-400">
-                  Joined: {new Date(m.joinedAt).toLocaleString()}
-                </div>
-              </div>
-              <div>
-                <button
-                  onClick={() => removeMember(m.userId)}
-                  className="px-3 py-1 bg-red-600 rounded"
+          <div className="space-y-2">
+            {members.map((m: any) => {
+              const memberEmail = m.user?.email ?? "";
+              const isCurrentAdmin =
+                memberEmail && communityAdminEmail
+                  ? memberEmail.toLowerCase() ===
+                    communityAdminEmail.toLowerCase()
+                  : false;
+
+              return (
+                <div
+                  key={m.id}
+                  className="flex items-center justify-between bg-slate-900/50 p-3 rounded-md mb-2"
                 >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))
+                  <div>
+                    <div className="font-semibold text-white">
+                      {m.user?.name || m.user?.email}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      Joined: {new Date(m.joinedAt).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {!isCurrentAdmin && (
+                      <button
+                        onClick={() => promoteMember(memberEmail)}
+                        className="px-3 py-1 bg-amber-600 rounded"
+                      >
+                        Promote
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removeMember(m.userId)}
+                      className="px-3 py-1 bg-red-600 rounded"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </section>
     </div>

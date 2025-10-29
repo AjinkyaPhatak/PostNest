@@ -21,20 +21,37 @@ export async function GET(request: Request) {
       whereClause.AND = [{ communityId: Number(communityId) }];
     }
 
+    // include votes so we can compute score and user's vote
     const posts = await prisma.post.findMany({
       where: whereClause,
-      include: { author: true, community: true },
+      include: {
+        author: true,
+        community: true,
+        votes: { include: { user: true } },
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    const formattedPosts = posts.map((post) => ({
-      id: post.id,
-      user: post.author?.name || post.author?.email || "Anonymous",
-      content: post.content,
-      approved: post.approved,
-      timestamp: post.createdAt.toISOString(),
-      isOwnPost: post.author?.email === email,
-    }));
+    const formattedPosts = posts.map((post) => {
+      const score = post.votes?.reduce((s, v) => s + v.value, 0) ?? 0;
+      // userVote computed below using included vote.user
+
+      return {
+        id: post.id,
+        user: post.author?.name || post.author?.email || "Anonymous",
+        title: post.title,
+        // do not include body in list responses (client will fetch detail on click)
+        approved: post.approved,
+        timestamp: post.createdAt.toISOString(),
+        isOwnPost: post.author?.email === email,
+        score,
+        // userVote is the numeric value the currently-specified email cast (if any)
+        userVote: post.votes?.find((v) => v.user?.email === email)?.value ?? 0,
+        community: post.community
+          ? { id: post.community.id, name: post.community.name }
+          : null,
+      };
+    });
 
     return NextResponse.json(formattedPosts);
   } catch (error) {
@@ -50,11 +67,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, content, communityId } = body;
+    const { name, email, title, body: postBody, communityId } = body;
 
-    if (!email || !content) {
+    if (!email || !title) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields: email and title are required" },
         { status: 400 }
       );
     }
@@ -108,7 +125,8 @@ export async function POST(request: Request) {
 
     const newPost = await prisma.post.create({
       data: {
-        content,
+        title,
+        body: postBody || "",
         authorId: user.id,
         communityId: community ? community.id : null,
         approved,
@@ -119,7 +137,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       id: newPost.id,
       user: newPost.author?.name || newPost.author?.email || "Anonymous",
-      content: newPost.content,
+      title: newPost.title,
+      body: newPost.body,
       approved: newPost.approved,
       timestamp: newPost.createdAt.toISOString(),
       isOwnPost: true,

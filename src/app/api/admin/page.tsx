@@ -8,7 +8,8 @@ import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
 type Post = {
   id: number;
-  content: string;
+  title: string;
+  body: string;
   approved: boolean;
   author: { email: string; name?: string | null };
   createdAt: string;
@@ -53,10 +54,10 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="min-h-screen bg-gray-100">
         <Navbar />
         <div className="flex justify-center items-center h-screen">
-          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-gray-600 animate-spin" />
         </div>
       </div>
     );
@@ -64,14 +65,14 @@ export default function AdminPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="min-h-screen bg-gray-100">
         <Navbar />
         <div className="max-w-3xl mx-auto px-6 pt-24">
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center">
-            <h2 className="text-2xl font-bold text-white mb-3">
+          <div className="card text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
               Admin Access Required
             </h2>
-            <p className="text-gray-400">
+            <p className="text-gray-600">
               Please sign in to access the admin dashboard.
             </p>
           </div>
@@ -82,14 +83,14 @@ export default function AdminPage() {
 
   if (user.email?.toLowerCase() !== ADMIN_EMAIL) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="min-h-screen bg-gray-100">
         <Navbar />
         <div className="max-w-3xl mx-auto px-6 pt-24">
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center">
-            <h2 className="text-2xl font-bold text-red-400 mb-3">
+          <div className="card text-center">
+            <h2 className="text-2xl font-bold text-red-600 mb-3">
               Access Denied
             </h2>
-            <p className="text-gray-400">
+            <p className="text-gray-600">
               You don't have permission to access this page.
             </p>
           </div>
@@ -102,42 +103,39 @@ export default function AdminPage() {
   const approvedPosts = posts.filter((p) => p.approved);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-gray-100">
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-6 pt-24 pb-12">
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold mb-4 text-gray-900">
             Admin Dashboard ⚙️
           </h1>
-          <p className="text-gray-400">Logged in as: {user.email}</p>
+          <p className="text-gray-600">Logged in as: {user.email}</p>
         </div>
 
         {/* Pending Posts */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
             Pending Approval ({pendingPosts.length})
           </h2>
 
           {pendingPosts.length === 0 ? (
-            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 text-center">
-              <p className="text-gray-400">No posts pending approval</p>
+            <div className="card text-center">
+              <p className="text-gray-600">No posts pending approval</p>
             </div>
           ) : (
             <div className="space-y-4">
               {pendingPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-yellow-700/50 rounded-2xl p-6 shadow-xl"
-                >
+                <div key={post.id} className="card">
                   <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 rounded-full bg-[#ffedd8] flex items-center justify-center text-[#ff4500] font-bold">
                       {(post.author?.name || post.author.email)
                         .charAt(0)
                         .toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-blue-400">
+                      <h3 className="font-semibold text-gray-900">
                         {post.author?.name || post.author.email}
                       </h3>
                       <p className="text-xs text-gray-500">
@@ -145,21 +143,24 @@ export default function AdminPage() {
                       </p>
                     </div>
                   </div>
-                  <p className="text-gray-300 leading-relaxed mb-4">
-                    {post.content}
+                  <p className="text-gray-700 leading-relaxed mb-4">
+                    <strong className="block text-gray-900 mb-2">
+                      {post.title}
+                    </strong>
+                    {post.body}
                   </p>
 
                   <div className="flex gap-3">
                     <button
                       onClick={() => approve(post.id)}
-                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200"
+                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-all duration-200"
                     >
                       <CheckCircle className="w-4 h-4" />
                       <span>Approve</span>
                     </button>
                     <button
                       onClick={() => reject(post.id)}
-                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all duration-200"
+                      className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-all duration-200"
                     >
                       <XCircle className="w-4 h-4" />
                       <span>Reject</span>
@@ -173,29 +174,26 @@ export default function AdminPage() {
 
         {/* Approved Posts */}
         <div>
-          <h2 className="text-2xl font-bold text-white mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
             Approved Posts ({approvedPosts.length})
           </h2>
 
           {approvedPosts.length === 0 ? (
-            <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 text-center">
-              <p className="text-gray-400">No approved posts yet</p>
+            <div className="card text-center">
+              <p className="text-gray-600">No approved posts yet</p>
             </div>
           ) : (
             <div className="space-y-4">
               {approvedPosts.map((post) => (
-                <div
-                  key={post.id}
-                  className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-green-700/50 rounded-2xl p-6 shadow-xl"
-                >
+                <div key={post.id} className="card">
                   <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                    <div className="w-10 h-10 rounded-full bg-[#ffedd8] flex items-center justify-center text-[#ff4500] font-bold">
                       {(post.author?.name || post.author.email)
                         .charAt(0)
                         .toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-blue-400">
+                      <h3 className="font-semibold text-gray-900">
                         {post.author?.name || post.author.email}
                       </h3>
                       <p className="text-xs text-gray-500">
@@ -203,8 +201,11 @@ export default function AdminPage() {
                       </p>
                     </div>
                   </div>
-                  <p className="text-gray-300 leading-relaxed">
-                    {post.content}
+                  <p className="text-gray-700 leading-relaxed">
+                    <strong className="block text-gray-900 mb-2">
+                      {post.title}
+                    </strong>
+                    {post.body}
                   </p>
                 </div>
               ))}

@@ -8,6 +8,7 @@ import { signInWithGoogle } from "@/lib/authClient";
 export default function CreatePostForm() {
   const [user, setUser] = useState<any>(null);
   const [content, setContent] = useState("");
+  const [title, setTitle] = useState("");
   const [communities, setCommunities] = useState<any[]>([]);
   const [communityId, setCommunityId] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
@@ -50,7 +51,7 @@ export default function CreatePostForm() {
     e.preventDefault();
     const u = await ensureSignedIn();
     if (!u) return alert("You must sign in to post");
-    if (!content.trim()) return;
+    if (!title.trim()) return alert("Title is required");
 
     setIsPosting(true);
     try {
@@ -60,7 +61,8 @@ export default function CreatePostForm() {
         body: JSON.stringify({
           name: u.displayName || (u.email ?? "").split("@")[0] || "user",
           email: u.email ?? "",
-          content,
+          title,
+          body: content,
           communityId: communityId ? Number(communityId) : undefined,
         }),
       });
@@ -85,7 +87,7 @@ export default function CreatePostForm() {
         <select
           value={communityId ?? ""}
           onChange={(e) => setCommunityId(e.target.value || null)}
-          className="w-full p-3 rounded-md bg-slate-900/50 border border-slate-700/50 text-white"
+          className="w-full p-3 rounded-md bg-white border border-gray-300 text-gray-900"
         >
           <option value="">Post to all</option>
           {communities.map((c) => (
@@ -95,15 +97,24 @@ export default function CreatePostForm() {
           ))}
         </select>
 
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder={
+            user ? `Title (as ${user.displayName || user.email})` : "Title"
+          }
+          className="w-full p-3 rounded-md bg-white border border-gray-300 text-gray-900"
+        />
+
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder={
             user
-              ? `Posting as ${user.displayName || user.email}`
-              : "Sign in to post"
+              ? `Body (posting as ${user.displayName || user.email})`
+              : "Body"
           }
-          className="w-full p-4 rounded-md bg-slate-900/50 border border-slate-700/50 text-white min-h-[140px]"
+          className="w-full p-4 rounded-md bg-white border border-gray-300 text-gray-900 min-h-[140px]"
         />
 
         <div className="flex items-center justify-between">

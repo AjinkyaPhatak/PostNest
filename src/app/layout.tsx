@@ -30,18 +30,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <div className="min-h-screen bg-gray-100">
           <Navbar />
 
           <main className="max-w-6xl mx-auto px-4 pt-24 pb-12">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              <aside className="hidden md:block md:col-span-3">
+              <aside className="hidden lg:block lg:col-span-2">
                 <Sidebar />
               </aside>
 
-              <section className="md:col-span-6">{children}</section>
+              <section className="lg:col-span-7 md:col-span-12">
+                {children}
+              </section>
 
-              <aside className="hidden md:block md:col-span-3">
+              <aside className="hidden lg:block lg:col-span-3">
                 <RightSidebar />
               </aside>
             </div>
