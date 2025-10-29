@@ -7,10 +7,23 @@ export default function Sidebar() {
   const [communities, setCommunities] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("/api/communities")
-      .then((r) => r.json())
-      .then((data) => setCommunities(data || []))
-      .catch(() => setCommunities([]));
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/communities");
+        const data = await res.json();
+        if (!mounted) return;
+        // ensure we always store an array to avoid `.map` errors
+        if (Array.isArray(data)) setCommunities(data);
+        else setCommunities([]);
+      } catch (e) {
+        if (!mounted) return;
+        setCommunities([]);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (

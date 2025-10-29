@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { use } from "react";
 import PostCard from "@/components/PostCard";
+import { auth, provider } from "@/lib/firebase";
+import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
 
 export default function CommunityPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -22,16 +24,44 @@ export default function CommunityPage({ params }: { params: { id: string } }) {
       .catch(() => setPosts([]));
   }, [id]);
 
+  const [user, setUser] = useState<any | null>(null);
+
+  useEffect(() => {
+    const un = onAuthStateChanged(auth, (u) => setUser(u));
+    return () => un();
+  }, []);
+
   const handleJoin = async () => {
-    // naive join flow: prompt for email (or use auth in real app)
-    const email = prompt("Enter your email to join this community");
-    if (!email) return;
-    await fetch(`/api/communities/${id}/join`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    alert("Requested to join — refresh to see membership");
+    let u = user;
+    if (!u) {
+      try {
+        const res = await signInWithPopup(auth, provider);
+        u = res.user;
+        setUser(u);
+      } catch (e) {
+        console.error("Sign-in required to join", e);
+        return;
+      }
+    }
+
+    if (!u || !u.email) return alert("Could not determine your email");
+
+    try {
+      const r = await fetch(`/api/communities/${id}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: u.email }),
+      });
+      const res = await r.json();
+      if (res && (res as any).error) {
+        alert(`Error: ${(res as any).error}`);
+      } else {
+        alert("Requested to join — refresh to see membership");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to join community");
+    }
   };
 
   if (!community)

@@ -39,10 +39,8 @@ export async function GET(request: Request) {
     return NextResponse.json(formattedPosts);
   } catch (error) {
     console.error("Error fetching posts:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch posts" },
-      { status: 500 }
-    );
+    // Return an empty array on error so frontend mapping doesn't break.
+    return NextResponse.json([], { status: 200 });
   }
 }
 

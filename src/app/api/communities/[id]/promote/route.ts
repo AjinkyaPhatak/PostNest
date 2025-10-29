@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: Request, context: any) {
   try {
-    const { id } = params;
+    const params = context?.params;
+    const resolvedParams =
+      params && typeof (params as any).then === "function"
+        ? await params
+        : params;
+    const id = resolvedParams?.id;
     const body = await req.json();
     const { masterEmail, targetEmail } = body;
 

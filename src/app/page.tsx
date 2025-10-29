@@ -39,7 +39,17 @@ export default function HomePage() {
         : "";
       const res = await fetch(`/api/posts${emailQuery}`);
       const data = await res.json();
-      setPosts(data);
+      // If API returns an array, use it. If it returns an error object or anything else, fall back to empty array.
+      if (Array.isArray(data)) {
+        // shuffle posts for home feed so order is random each load
+        const shuffled = [...data].sort(() => Math.random() - 0.5);
+        setPosts(shuffled);
+      } else {
+        // log error payloads for debugging
+        if (data && (data as any).error)
+          console.error("API error fetching posts:", (data as any).error);
+        setPosts([]);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -218,9 +228,9 @@ export default function HomePage() {
                 No posts yet. Be the first to share!
               </p>
             </div>
-          ) : (
+          ) : Array.isArray(posts) ? (
             posts.map((post, idx) => <PostCard key={idx} post={post} />)
-          )}
+          ) : null}
         </div>
       </main>
     </div>

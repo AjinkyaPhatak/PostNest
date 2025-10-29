@@ -50,15 +50,7 @@ export default function Navbar() {
               Admin
             </Link>
 
-            {/* Show Sign In button only when not authenticated */}
-            {!user && (
-              <button
-                onClick={handleLogin}
-                className="ml-2 bg-white text-black px-4 py-2 rounded-md hover:bg-gray-200 transition"
-              >
-                Sign in with Google
-              </button>
-            )}
+            {/* removed login button per UI requirement */}
           </div>
         </div>
       </div>
