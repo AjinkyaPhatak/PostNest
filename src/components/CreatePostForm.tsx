@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, provider } from "@/lib/firebase";
-import { onAuthStateChanged, signInWithPopup } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { signInWithGoogle } from "@/lib/authClient";
 
 export default function CreatePostForm() {
   const [user, setUser] = useState<any>(null);
@@ -37,8 +38,8 @@ export default function CreatePostForm() {
   const ensureSignedIn = async () => {
     if (auth.currentUser) return auth.currentUser;
     try {
-      const result = await signInWithPopup(auth, provider);
-      return result.user;
+      const user = await signInWithGoogle();
+      return user;
     } catch (e) {
       console.error("Sign in failed", e);
       return null;

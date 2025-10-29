@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { use } from "react";
 import PostCard from "@/components/PostCard";
-import { auth, provider } from "@/lib/firebase";
-import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
+import Link from "next/link";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { signInWithGoogle } from "@/lib/authClient";
 
 export default function CommunityPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const [community, setCommunity] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
+  const [user, setUser] = useState<any | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetch(`/api/communities?id=${id}`)
@@ -24,19 +26,26 @@ export default function CommunityPage({ params }: { params: { id: string } }) {
       .catch(() => setPosts([]));
   }, [id]);
 
-  const [user, setUser] = useState<any | null>(null);
-
+  // Listen for auth changes to determine if current user is community admin/master
   useEffect(() => {
     const un = onAuthStateChanged(auth, (u) => setUser(u));
     return () => un();
   }, []);
 
+  useEffect(() => {
+    const master = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.trim().toLowerCase();
+    const caller = user?.email?.toLowerCase() ?? null;
+    const adminEmail = community?.admin?.email?.toLowerCase() ?? null;
+    setIsAdmin(!!(caller && (caller === adminEmail || caller === master)));
+  }, [user, community]);
+
   const handleJoin = async () => {
     let u = user;
     if (!u) {
       try {
-        const res = await signInWithPopup(auth, provider);
-        u = res.user;
+        const signed = await signInWithGoogle();
+        if (!signed) return; // redirect-based sign-in occurred or user didn't finish sign-in
+        u = signed;
         setUser(u);
       } catch (e) {
         console.error("Sign-in required to join", e);
@@ -74,13 +83,23 @@ export default function CommunityPage({ params }: { params: { id: string } }) {
           <h2 className="text-2xl font-bold text-white">r/{community.name}</h2>
           <p className="text-sm text-gray-400">{community.description}</p>
         </div>
-        <div>
-          <button
-            onClick={handleJoin}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md"
-          >
-            Join
-          </button>
+        <div className="flex items-center space-x-3">
+          {isAdmin && (
+            <Link
+              href={`/community/${id}/admin`}
+              className="text-sm bg-slate-800/70 text-white px-3 py-2 rounded-md"
+            >
+              Admin
+            </Link>
+          )}
+          <div>
+            <button
+              onClick={handleJoin}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md"
+            >
+              Join
+            </button>
+          </div>
         </div>
       </div>
 

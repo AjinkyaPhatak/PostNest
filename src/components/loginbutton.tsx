@@ -1,7 +1,6 @@
 "use client";
 
-import { signInWithPopup } from "firebase/auth";
-import { auth, provider } from "@/lib/firebase";
+import { signInWithGoogle } from "@/lib/authClient";
 import { useRouter } from "next/navigation";
 
 export default function LoginButton() {
@@ -9,8 +8,12 @@ export default function LoginButton() {
 
   const handleLogin = async () => {
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+      const user = await signInWithGoogle();
+
+      if (!user) {
+        // If signInWithGoogle triggered a redirect, the app will reload — nothing more to do here.
+        return;
+      }
 
       // Store user in localStorage
       localStorage.setItem("user", JSON.stringify(user));
@@ -20,8 +23,12 @@ export default function LoginButton() {
       } else {
         router.push("/user");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error);
+      // surface a simple UI message so user knows something went wrong
+      alert(
+        "Sign in failed — check the browser console for details and ensure your Firebase config/authorized domains are set up."
+      );
     }
   };
 

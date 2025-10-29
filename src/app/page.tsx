@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { auth, provider } from "@/lib/firebase";
+import { signOut, onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { signInWithGoogle, handleRedirectResult } from "@/lib/authClient";
 import PostCard from "@/components/PostCard";
 import { User, LogOut, Send, Loader2, MessageSquare } from "lucide-react";
 
@@ -25,6 +26,17 @@ export default function HomePage() {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
     });
+
+    // If the app was redirected back from a redirect-based sign-in, resolve the result.
+    (async () => {
+      try {
+        const redirectedUser = await handleRedirectResult();
+        if (redirectedUser) setUser(redirectedUser);
+      } catch (err) {
+        console.error("Error handling redirect sign-in result:", err);
+      }
+    })();
+
     return () => unsubscribe();
   }, []);
 
@@ -69,12 +81,15 @@ export default function HomePage() {
     }
   }, [pathname, user, fetchPosts]);
 
-  // Handle Google login
+  // Handle Google login (popup with redirect fallback)
   const handleLogin = async () => {
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithGoogle();
     } catch (err) {
       console.error("Login error:", err);
+      alert(
+        "Sign in failed — check the browser console for details and ensure your Firebase config/authorized domains are set up."
+      );
     }
   };
 
