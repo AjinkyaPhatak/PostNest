@@ -68,8 +68,12 @@ export default function AdminPage() {
         <Navbar />
         <div className="max-w-3xl mx-auto px-6 pt-24">
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center">
-            <h2 className="text-2xl font-bold text-white mb-3">Admin Access Required</h2>
-            <p className="text-gray-400">Please sign in to access the admin dashboard.</p>
+            <h2 className="text-2xl font-bold text-white mb-3">
+              Admin Access Required
+            </h2>
+            <p className="text-gray-400">
+              Please sign in to access the admin dashboard.
+            </p>
           </div>
         </div>
       </div>
@@ -82,8 +86,12 @@ export default function AdminPage() {
         <Navbar />
         <div className="max-w-3xl mx-auto px-6 pt-24">
           <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-12 text-center">
-            <h2 className="text-2xl font-bold text-red-400 mb-3">Access Denied</h2>
-            <p className="text-gray-400">You don't have permission to access this page.</p>
+            <h2 className="text-2xl font-bold text-red-400 mb-3">
+              Access Denied
+            </h2>
+            <p className="text-gray-400">
+              You don't have permission to access this page.
+            </p>
           </div>
         </div>
       </div>
@@ -96,7 +104,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <Navbar />
-      
+
       <main className="max-w-6xl mx-auto px-6 pt-24 pb-12">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -124,7 +132,9 @@ export default function AdminPage() {
                 >
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                      {(post.author?.name || post.author.email).charAt(0).toUpperCase()}
+                      {(post.author?.name || post.author.email)
+                        .charAt(0)
+                        .toUpperCase()}
                     </div>
                     <div>
                       <h3 className="font-semibold text-blue-400">
@@ -135,8 +145,10 @@ export default function AdminPage() {
                       </p>
                     </div>
                   </div>
-                  <p className="text-gray-300 leading-relaxed mb-4">{post.content}</p>
-                  
+                  <p className="text-gray-300 leading-relaxed mb-4">
+                    {post.content}
+                  </p>
+
                   <div className="flex gap-3">
                     <button
                       onClick={() => approve(post.id)}
@@ -178,7 +190,9 @@ export default function AdminPage() {
                 >
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                      {(post.author?.name || post.author.email).charAt(0).toUpperCase()}
+                      {(post.author?.name || post.author.email)
+                        .charAt(0)
+                        .toUpperCase()}
                     </div>
                     <div>
                       <h3 className="font-semibold text-blue-400">
@@ -189,7 +203,9 @@ export default function AdminPage() {
                       </p>
                     </div>
                   </div>
-                  <p className="text-gray-300 leading-relaxed">{post.content}</p>
+                  <p className="text-gray-300 leading-relaxed">
+                    {post.content}
+                  </p>
                 </div>
               ))}
             </div>

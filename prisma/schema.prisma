@@ -8,25 +8,50 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String?
-  email     String    @unique
-  image     String?   // ✅ Add this if not present
-  role      Role      @default(USER)
-  posts     Post[]
-  createdAt DateTime  @default(now())
-  accounts  Account[]
-  sessions  Session[]
+  id          Int                   @id @default(autoincrement())
+  name        String?
+  email       String                @unique
+  image       String?
+  role        Role                  @default(USER)
+  posts       Post[]
+  memberships CommunityMembership[]
+  adminOf     Community?            @relation("CommunityAdmin")
+  createdAt   DateTime              @default(now())
+  accounts    Account[]
+  sessions    Session[]
 }
 
-
 model Post {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   content     String
-  approved    Boolean  @default(false)
-  author      User?    @relation(fields: [authorId], references: [id])
+  approved    Boolean    @default(false)
+  author      User?      @relation(fields: [authorId], references: [id])
   authorId    Int?
-  createdAt   DateTime @default(now())
+  community   Community? @relation(fields: [communityId], references: [id])
+  communityId Int?
+  createdAt   DateTime   @default(now())
+}
+
+model Community {
+  id          Int                   @id @default(autoincrement())
+  name        String                @unique
+  description String?
+  admin       User?                 @relation("CommunityAdmin", fields: [adminId], references: [id])
+  adminId     Int?                  @unique
+  members     CommunityMembership[]
+  posts       Post[]
+  createdAt   DateTime              @default(now())
+}
+
+model CommunityMembership {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  community   Community @relation(fields: [communityId], references: [id])
+  communityId Int
+  joinedAt    DateTime  @default(now())
+
+  @@unique([userId, communityId])
 }
 
 enum Role {
@@ -35,17 +60,17 @@ enum Role {
 }
 
 model Account {
-  id                Int       @id @default(autoincrement())
+  id                Int     @id @default(autoincrement())
   userId            Int
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?   @db.Text
-  access_token      String?   @db.Text
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?   @db.Text
+  id_token          String? @db.Text
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -68,4 +93,3 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
-

@@ -1,10 +1,9 @@
 "use client";
-import "./globals.css";
 import { useEffect, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { auth, provider } from "@/lib/firebase";
-import Navbar from "@/components/navbar";
+import PostCard from "@/components/PostCard";
 import { User, LogOut, Send, Loader2, MessageSquare } from "lucide-react";
 
 type Post = {
@@ -103,10 +102,8 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      <Navbar />
-
-      <main className="max-w-3xl mx-auto px-6 pt-24 pb-12">
+    <div>
+      <main>
         {/* Hero Section */}
         <div className="text-center mb-12 animate-fade-in">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -222,27 +219,7 @@ export default function HomePage() {
               </p>
             </div>
           ) : (
-            posts.map((post, idx) => (
-              <div
-                key={idx}
-                className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
-              >
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                    {post.user.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-blue-400">
-                      @{post.user}
-                    </h3>
-                    {post.timestamp && (
-                      <p className="text-xs text-gray-500">{post.timestamp}</p>
-                    )}
-                  </div>
-                </div>
-                <p className="text-gray-300 leading-relaxed">{post.content}</p>
-              </div>
-            ))
+            posts.map((post, idx) => <PostCard key={idx} post={post} />)
           )}
         </div>
       </main>

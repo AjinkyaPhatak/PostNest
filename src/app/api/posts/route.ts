@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 /**
  * GET - Fetch approved posts + user's own unapproved posts
@@ -10,15 +8,22 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get("email"); // optional, passed from frontend
+    const communityId = searchParams.get("communityId");
+
+    const whereClause: any = {
+      OR: [
+        { approved: true },
+        ...(email ? [{ author: { email } }] : []), // include user's own posts
+      ],
+    };
+
+    if (communityId) {
+      whereClause.AND = [{ communityId: Number(communityId) }];
+    }
 
     const posts = await prisma.post.findMany({
-      where: {
-        OR: [
-          { approved: true },
-          ...(email ? [{ author: { email } }] : []), // include user's own posts
-        ],
-      },
-      include: { author: true },
+      where: whereClause,
+      include: { author: true, community: true },
       orderBy: { createdAt: "desc" },
     });
 
@@ -47,7 +52,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, content } = body;
+    const { name, email, content, communityId } = body;
 
     if (!email || !content) {
       return NextResponse.json(
@@ -56,28 +61,28 @@ export async function POST(request: Request) {
       );
     }
 
-    // Determine if this author is the configured admin
+    // Determine if this author is the configured master admin
     const adminEmail =
       process.env.NEXT_PUBLIC_ADMIN_EMAIL?.trim().toLowerCase();
-    const isAdmin = email.trim().toLowerCase() === adminEmail;
+    const isMasterAdmin = email.trim().toLowerCase() === adminEmail;
 
-    // Find or create user; set role to ADMIN if the email matches
+    // Find or create user; set role to ADMIN if the email matches master admin
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       user = await prisma.user.create({
         data: {
           email,
           name: name || email.split("@")[0],
-          role: isAdmin ? "ADMIN" : "USER",
+          role: isMasterAdmin ? "ADMIN" : "USER",
         },
       });
-    } else if (!user.role && isAdmin) {
+    } else if (!user.role && isMasterAdmin) {
       // in case role missing (older records), upgrade
       user = await prisma.user.update({
         where: { email },
         data: { role: "ADMIN" },
       });
-    } else if (user.role !== "ADMIN" && isAdmin) {
+    } else if (user.role !== "ADMIN" && isMasterAdmin) {
       // upgrade existing user to ADMIN if it matches admin email
       user = await prisma.user.update({
         where: { email },
@@ -85,14 +90,32 @@ export async function POST(request: Request) {
       });
     }
 
-    // Create post: auto-approve when posted by admin, otherwise require approval
+    // Determine community-based approval: auto-approve when posted by master admin
+    // or when posted by the community admin for the given community
+    let approved = false;
+    let community = null;
+    if (communityId) {
+      community = await prisma.community.findUnique({
+        where: { id: Number(communityId) },
+      });
+      if (community) {
+        if (isMasterAdmin) approved = true;
+        else if (community.adminId && community.adminId === user.id)
+          approved = true;
+      }
+    } else {
+      // No community: master admin posts are auto-approved
+      if (isMasterAdmin) approved = true;
+    }
+
     const newPost = await prisma.post.create({
       data: {
         content,
         authorId: user.id,
-        approved: isAdmin ? true : false,
+        communityId: community ? community.id : null,
+        approved,
       },
-      include: { author: true },
+      include: { author: true, community: true },
     });
 
     return NextResponse.json({

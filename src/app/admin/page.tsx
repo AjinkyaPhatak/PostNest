@@ -49,9 +49,15 @@ export default function AdminDashboard() {
   if (!user)
     return (
       <div className="flex flex-col items-center justify-center h-screen space-y-4 text-center">
-        <h1 className="text-2xl font-bold text-blue-400">Admin Access Required</h1>
-        <p className="text-gray-400">Please sign in with your admin Google account.</p>
-        <a href="/" className="btn btn-primary">Go to Home</a>
+        <h1 className="text-2xl font-bold text-blue-400">
+          Admin Access Required
+        </h1>
+        <p className="text-gray-400">
+          Please sign in with your admin Google account.
+        </p>
+        <a href="/" className="btn btn-primary">
+          Go to Home
+        </a>
       </div>
     );
 
@@ -76,7 +82,9 @@ export default function AdminDashboard() {
       <Navbar />
       <main className="container mt-8 space-y-8">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-blue-400">Admin Dashboard ⚙️</h1>
+          <h1 className="text-3xl font-bold text-blue-400">
+            Admin Dashboard ⚙️
+          </h1>
           <button
             onClick={() => signOut(auth)}
             className="btn btn-primary bg-red-600"
@@ -92,7 +100,9 @@ export default function AdminDashboard() {
 
           {posts.map((post) => (
             <div key={post.id} className="card">
-              <h2 className="font-semibold text-blue-400">@{post.author?.name}</h2>
+              <h2 className="font-semibold text-blue-400">
+                @{post.author?.name}
+              </h2>
               <p className="mt-2 text-gray-300">{post.content}</p>
               <button
                 onClick={() => handleApprove(post.id)}
