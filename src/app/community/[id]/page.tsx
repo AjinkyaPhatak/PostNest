@@ -78,27 +78,37 @@ export default function CommunityPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-start justify-between">
+        <div className="max-w-[65%]">
           <h2 className="text-2xl font-bold text-white">r/{community.name}</h2>
           <p className="text-sm text-gray-400">{community.description}</p>
         </div>
-        <div className="flex items-center space-x-3">
-          {isAdmin && (
-            <Link
-              href={`/community/${id}/admin`}
-              className="text-sm bg-slate-800/70 text-white px-3 py-2 rounded-md"
-            >
-              Admin
-            </Link>
-          )}
-          <div>
-            <button
-              onClick={handleJoin}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md"
-            >
-              Join
-            </button>
+
+        <div className="w-48">
+          <div className="bg-slate-900/40 p-3 rounded-md">
+            <div className="text-xs text-gray-400">Community admin</div>
+            <div className="font-semibold text-white truncate">
+              {community.admin?.name || community.admin?.email || "—"}
+            </div>
+
+            {/* Admin controls button placed below admin name */}
+            <div className="mt-3 flex flex-col gap-2">
+              {isAdmin && (
+                <Link
+                  href={`/community/${id}/admin`}
+                  className="text-sm bg-amber-600 text-white px-3 py-2 rounded-md text-center"
+                >
+                  Admin Controls
+                </Link>
+              )}
+
+              <button
+                onClick={handleJoin}
+                className="bg-blue-600 text-white px-3 py-2 rounded-md"
+              >
+                Join
+              </button>
+            </div>
           </div>
         </div>
       </div>

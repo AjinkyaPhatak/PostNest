@@ -74,9 +74,33 @@ async function main() {
     });
     communities.push(c);
     // create membership for admin
-    await prisma.communityMembership.create({
-      data: { userId: admin.id, communityId: c.id },
-    });
+    try {
+      await prisma.communityMembership.create({
+        data: { userId: admin.id, communityId: c.id },
+      });
+    } catch (e) {
+      // ignore unique constraint errors
+    }
+  }
+
+  // Create additional memberships so users belong to multiple communities.
+  console.log("Assigning users to multiple communities...");
+  for (const u of users) {
+    // each user will join between 2 and 4 communities
+    const joins = Math.floor(Math.random() * 3) + 2; // 2..4
+    const picked = new Set();
+    for (let j = 0; j < joins; j++) {
+      const c = rand(communities);
+      if (picked.has(c.id)) continue;
+      picked.add(c.id);
+      try {
+        await prisma.communityMembership.create({
+          data: { userId: u.id, communityId: c.id },
+        });
+      } catch (e) {
+        // unique constraint may fail if already a member; ignore
+      }
+    }
   }
 
   console.log("Creating posts for each community...");
@@ -96,7 +120,15 @@ async function main() {
   for (const c of communities) {
     const postsToCreate = 12; // ~12 * 14 = 168 posts
     for (let i = 0; i < postsToCreate; i++) {
-      const author = rand(users);
+      // pick an author from the community members to enforce membership
+      const members = await prisma.communityMembership.findMany({
+        where: { communityId: c.id },
+      });
+      if (!members || members.length === 0) continue; // no members for this community
+      const memberRec = rand(members);
+      const author =
+        users.find((u) => u.id === memberRec.userId) ||
+        (await prisma.user.findUnique({ where: { id: memberRec.userId } }));
       const title = `${rand(headlines)} (post ${i + 1})`;
       const body = `This is a sample post in r/${
         c.name
@@ -111,15 +143,19 @@ async function main() {
         },
       });
 
-      // randomly create votes
+      // randomly create votes from community members (not the author)
       const voteUsers = [];
       for (let v = 0; v < 4; v++) {
-        const voter = rand(users);
-        if (voteUsers.includes(voter.id) || voter.id === author.id) continue;
-        voteUsers.push(voter.id);
+        const voterRec = rand(members);
+        if (
+          voteUsers.includes(voterRec.userId) ||
+          voterRec.userId === author.id
+        )
+          continue;
+        voteUsers.push(voterRec.userId);
         const value = Math.random() > 0.6 ? 1 : -1;
         await prisma.vote.create({
-          data: { userId: voter.id, postId: post.id, value },
+          data: { userId: voterRec.userId, postId: post.id, value },
         });
       }
     }

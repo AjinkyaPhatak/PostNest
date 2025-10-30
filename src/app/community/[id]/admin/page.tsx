@@ -143,104 +143,153 @@ export default function CommunityAdminPage({
     fetchData();
   };
 
-  if (loading) return <div>Loading admin tools...</div>;
-
-  if (!authorized)
+  if (loading)
     return (
-      <div className="p-6 bg-slate-900/50 rounded">
-        <h3 className="text-lg font-semibold text-white">Access denied</h3>
-        <p className="text-sm text-gray-400">
-          Only the community admin or the master admin can access this page.
-        </p>
+      <div className="container mx-auto px-4 py-6">
+        <div className="max-w-3xl mx-auto p-6 bg-slate-800 rounded-md">
+          <div className="text-white">Loading admin tools...</div>
+        </div>
       </div>
     );
 
+  if (!authorized)
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="max-w-3xl mx-auto p-6 bg-slate-800 border border-slate-700 rounded-md">
+          <h3 className="text-lg font-semibold text-white">Access denied</h3>
+          <p className="text-sm text-gray-400 mt-2">
+            Only the community admin or the master admin can access this page.
+          </p>
+        </div>
+      </div>
+    );
+
+  // compute master admin for display
+  const masterAdmin = process.env.NEXT_PUBLIC_ADMIN_EMAIL || null;
+
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">
-        Community Admin — Manage r/{id}
-      </h2>
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Main column: pending posts and core controls */}
+        <div className="flex-1 space-y-6">
+          <h2 className="text-2xl font-bold text-white">
+            Community Admin — Manage r/{id}
+          </h2>
 
-      <section>
-        <h3 className="text-lg font-semibold text-white mb-2">Pending Posts</h3>
-        {pendingPosts.length === 0 ? (
-          <div className="text-sm text-gray-400">No pending posts</div>
-        ) : (
-          pendingPosts.map((p: any) => (
-            <div key={p.id} className="bg-slate-900/50 p-4 rounded-md mb-3">
-              <div className="font-semibold text-white">{p.user}</div>
-              <div className="text-gray-300 mt-2">
-                <strong className="block text-white">{p.title}</strong>
-                <span className="text-gray-300">{p.body}</span>
-              </div>
-              <div className="mt-3 flex space-x-2">
-                <button
-                  onClick={() => approve(p.id)}
-                  className="px-3 py-1 bg-green-600 rounded"
+          <section>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Pending Posts
+            </h3>
+            {pendingPosts.length === 0 ? (
+              <div className="text-sm text-gray-400">No pending posts</div>
+            ) : (
+              pendingPosts.map((p: any) => (
+                <article
+                  key={p.id}
+                  className="bg-slate-800 border border-slate-700 p-4 rounded-md mb-3 shadow-sm"
+                  aria-labelledby={`post-${p.id}-title`}
                 >
-                  Approve
-                </button>
-                <button
-                  onClick={() => reject(p.id)}
-                  className="px-3 py-1 bg-red-600 rounded"
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </section>
-
-      <section>
-        <h3 className="text-lg font-semibold text-white mb-2">Members</h3>
-        {members.length === 0 ? (
-          <div className="text-sm text-gray-400">No members</div>
-        ) : (
-          <div className="space-y-2">
-            {members.map((m: any) => {
-              const memberEmail = m.user?.email ?? "";
-              const isCurrentAdmin =
-                memberEmail && communityAdminEmail
-                  ? memberEmail.toLowerCase() ===
-                    communityAdminEmail.toLowerCase()
-                  : false;
-
-              return (
-                <div
-                  key={m.id}
-                  className="flex items-center justify-between bg-slate-900/50 p-3 rounded-md mb-2"
-                >
-                  <div>
-                    <div className="font-semibold text-white">
-                      {m.user?.name || m.user?.email}
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      Joined: {new Date(m.joinedAt).toLocaleString()}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="font-semibold text-white">{p.user}</div>
+                      <h4
+                        id={`post-${p.id}-title`}
+                        className="text-white mt-1 font-medium"
+                      >
+                        {p.title}
+                      </h4>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {!isCurrentAdmin && (
-                      <button
-                        onClick={() => promoteMember(memberEmail)}
-                        className="px-3 py-1 bg-amber-600 rounded"
-                      >
-                        Promote
-                      </button>
-                    )}
+                  <div className="text-gray-300 mt-3">
+                    <p className="whitespace-pre-line">{p.body}</p>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
                     <button
-                      onClick={() => removeMember(m.userId)}
-                      className="px-3 py-1 bg-red-600 rounded"
+                      onClick={() => approve(p.id)}
+                      className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-sm"
+                      aria-label={`Approve post ${p.title}`}
                     >
-                      Remove
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => reject(p.id)}
+                      className="px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded-md text-sm"
+                      aria-label={`Reject post ${p.title}`}
+                    >
+                      Reject
                     </button>
                   </div>
+                </article>
+              ))
+            )}
+          </section>
+        </div>
+        {/* Right sidebar: admin info, master admin, members list */}
+        <aside className="w-full lg:w-96">
+          <div className="lg:sticky lg:top-24 space-y-4">
+            <div className="bg-slate-800 border border-slate-700 p-4 rounded-md">
+              <div className="text-xs text-gray-400">Community admin</div>
+              <div className="font-semibold text-white truncate">
+                {communityAdminEmail || "—"}
+              </div>
+            </div>
+
+            <div className="bg-slate-800 border border-slate-700 p-4 rounded-md">
+              <div className="text-xs text-gray-400">Master admin</div>
+              <div className="font-semibold text-white truncate">
+                {masterAdmin || "—"}
+              </div>
+            </div>
+
+            <div className="bg-slate-800 border border-slate-700 p-4 rounded-md">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-semibold text-white">Members</h4>
+                  <div className="text-xs text-gray-400">
+                    {members.length} total
+                  </div>
                 </div>
-              );
-            })}
+              </div>
+
+              <div className="mt-3 space-y-2 max-h-72 overflow-auto">
+                {members.length === 0 ? (
+                  <div className="text-sm text-gray-400">No members</div>
+                ) : (
+                  members.map((m: any) => {
+                    const memberEmail = m.user?.email ?? "";
+                    const isCurrentAdmin =
+                      memberEmail && communityAdminEmail
+                        ? memberEmail.toLowerCase() ===
+                          communityAdminEmail.toLowerCase()
+                        : false;
+
+                    return (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between p-2 rounded-md hover:bg-slate-700"
+                      >
+                        <div>
+                          <div className="font-medium text-white">
+                            {m.user?.name || m.user?.email}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {m.user?.email}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {isCurrentAdmin && (
+                            <div className="text-xs text-amber-400">Admin</div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
-        )}
-      </section>
+        </aside>
+      </div>
     </div>
   );
 }

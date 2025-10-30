@@ -123,6 +123,24 @@ export async function POST(request: Request) {
       if (isMasterAdmin) approved = true;
     }
 
+    // Enforce that the author must be a member of the target community to post.
+    // Master admin and the community admin are allowed to post even if not
+    // explicitly a member. If the user is not a member and not privileged,
+    // reject the request.
+    if (community) {
+      const existingMembership = await prisma.communityMembership.findFirst({
+        where: { userId: user.id, communityId: community.id },
+      });
+      const isCommunityAdmin =
+        community.adminId && community.adminId === user.id;
+      if (!existingMembership && !isMasterAdmin && !isCommunityAdmin) {
+        return NextResponse.json(
+          { error: "You must be a member of this community to post." },
+          { status: 403 }
+        );
+      }
+    }
+
     const newPost = await prisma.post.create({
       data: {
         title,
