@@ -16,14 +16,44 @@ export async function POST(request: Request, { params }: any) {
         { status: 401 }
       );
 
-    const verified = await verifyIdToken(token);
-    const email = verified?.email;
+    let email: string | undefined = undefined;
+    let verified: any = null;
+    try {
+      verified = await verifyIdToken(token);
+      email = verified?.email;
+    } catch (e) {
+      console.error("verifyIdToken failed:", e);
+      // Local/dev fallback: accept an x-user-email header when running locally and
+      // firebase-admin cannot be initialized (convenience for development only).
+      if (process.env.NODE_ENV !== "production") {
+        const devEmail = request.headers.get("x-user-email");
+        if (devEmail) {
+          email = devEmail;
+        } else {
+          return NextResponse.json(
+            {
+              error:
+                "Token verification failed (dev fallback requires x-user-email header)",
+            },
+            { status: 401 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { error: "Token verification failed" },
+          { status: 401 }
+        );
+      }
+    }
     if (!email)
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user)
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    // Ensure a User row exists for this email (create if missing) so votes can be attributed.
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      const displayName = verified?.name || email.split("@")[0];
+      user = await prisma.user.create({ data: { email, name: displayName } });
+    }
 
     const body = await request.json();
     const { value } = body; // expected 1, -1, or 0 to clear

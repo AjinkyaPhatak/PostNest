@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import Link from "next/link";
 
 export default function PostDetailPage() {
@@ -14,11 +15,31 @@ export default function PostDetailPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    fetch(`/api/posts/${id}`)
+    const user = auth.currentUser;
+    const emailQuery = user
+      ? `?email=${encodeURIComponent(user.email || "")}`
+      : "";
+    fetch(`/api/posts/${id}${emailQuery}`)
       .then((r) => r.json())
       .then((data) => setPost(data))
       .catch((e) => console.error(e))
       .finally(() => setLoading(false));
+  }, [id]);
+
+  // Re-fetch post when auth state changes so userVote can appear after sign in
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, () => {
+      if (!id) return;
+      const user = auth.currentUser;
+      const emailQuery = user
+        ? `?email=${encodeURIComponent(user.email || "")}`
+        : "";
+      fetch(`/api/posts/${id}${emailQuery}`)
+        .then((r) => r.json())
+        .then((data) => setPost(data))
+        .catch((e) => console.error(e));
+    });
+    return () => unsub();
   }, [id]);
 
   const cast = async (val: number) => {
@@ -31,12 +52,17 @@ export default function PostDetailPage() {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "x-user-email": user.email || "",
         },
         body: JSON.stringify({ value: val }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "vote failed");
-      setPost((p: any) => ({ ...p, score: data.score }));
+      setPost((p: any) => ({
+        ...p,
+        score: data.score,
+        userVote: data.userVote,
+      }));
     } catch (e) {
       console.error(e);
       alert("Failed to cast vote");
@@ -50,11 +76,23 @@ export default function PostDetailPage() {
     <div className="post-detail-container">
       <div className="post-detail">
         <div className="post-vote">
-          <button onClick={() => cast(1)} aria-label="upvote">
+          <button
+            onClick={() => cast(post.userVote === 1 ? 0 : 1)}
+            aria-label="upvote"
+            className={
+              post.userVote === 1 ? "text-orange-500" : "text-gray-400"
+            }
+          >
             ▲
           </button>
           <div className="score">{post.score ?? 0}</div>
-          <button onClick={() => cast(-1)} aria-label="downvote">
+          <button
+            onClick={() => cast(post.userVote === -1 ? 0 : -1)}
+            aria-label="downvote"
+            className={
+              post.userVote === -1 ? "text-purple-600" : "text-gray-400"
+            }
+          >
             ▼
           </button>
         </div>

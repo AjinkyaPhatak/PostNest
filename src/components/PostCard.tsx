@@ -18,6 +18,7 @@ export default function PostCard({ post }: { post: any }) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "x-user-email": user.email || "",
         },
         body: JSON.stringify({ value: val }),
       });
@@ -38,7 +39,10 @@ export default function PostCard({ post }: { post: any }) {
         <div className="vote-col flex flex-col items-center px-3 py-2 text-gray-400">
           <button
             onClick={() => cast(userVote === 1 ? 0 : 1)}
-            className={`vote-btn ${userVote === 1 ? "text-orange-500" : ""}`}
+            className={`vote-btn ${
+              userVote === 1 ? "text-orange-500" : "text-gray-400"
+            }`}
+            aria-label="upvote"
           >
             ▲
           </button>
@@ -47,7 +51,10 @@ export default function PostCard({ post }: { post: any }) {
           </span>
           <button
             onClick={() => cast(userVote === -1 ? 0 : -1)}
-            className={`vote-btn ${userVote === -1 ? "text-blue-500" : ""}`}
+            className={`vote-btn ${
+              userVote === -1 ? "text-purple-600" : "text-gray-400"
+            }`}
+            aria-label="downvote"
           >
             ▼
           </button>

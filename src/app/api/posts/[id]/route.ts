@@ -7,6 +7,9 @@ export async function GET(request: Request, { params }: any) {
     if (!postId)
       return NextResponse.json({ error: "Invalid post id" }, { status: 400 });
 
+    const { searchParams } = new URL(request.url);
+    const email = searchParams.get("email");
+
     const post = await prisma.post.findUnique({
       where: { id: postId },
       include: {
@@ -20,6 +23,9 @@ export async function GET(request: Request, { params }: any) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const score = post.votes?.reduce((s, v) => s + v.value, 0) ?? 0;
+    const userVote = email
+      ? post.votes?.find((v) => v.user?.email === email)?.value ?? 0
+      : 0;
 
     return NextResponse.json({
       id: post.id,
@@ -31,6 +37,7 @@ export async function GET(request: Request, { params }: any) {
         : null,
       createdAt: post.createdAt,
       score,
+      userVote,
     });
   } catch (error) {
     console.error("Error fetching post detail:", error);
